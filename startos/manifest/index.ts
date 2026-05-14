@@ -9,7 +9,6 @@ export const manifest = setupManifest({
   upstreamRepo: 'https://github.com/holesail/holesail-docker/',
   marketingUrl: 'https://holesail.io/',
   donationUrl: null,
-  docsUrls: ['https://docs.holesail.io/'],
   description: i18n.description,
   volumes: ['holesail', 'startos'],
   images: {
