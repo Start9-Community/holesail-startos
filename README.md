@@ -77,8 +77,8 @@ All configuration is managed through StartOS actions — there are no user-edita
 | Variable   | Value |
 | ---------- | ----- |
 | `MODE`     | `server` |
-| `PORT`     | Internal port of the tunneled service interface |
-| `HOST`     | `{packageId}.startos` (or `startos` for StartOS UI) |
+| `PORT`     | The target interface's LXC-bridge port (resolved at runtime) |
+| `HOST`     | The target interface's LXC-bridge IPv4 host (resolved at runtime) |
 | `KEY`      | Connection string |
 | `LOG`      | `true` |
 | `NODE_ENV` | `production` |

@@ -32,28 +32,22 @@ export const viewConnections = sdk.Action.withoutInput(
         value: (
           await Promise.all(
             Object.entries(store).flatMap(async ([packageId, ifaces]) => {
-              let packageTitle = 'StartOS'
-
-              if (packageId !== 'startos') {
-                packageTitle =
-                  (await sdk
-                    .getServiceManifest(effects, packageId, (m) => m?.title)
-                    .const()) ?? packageId
-              }
+              // start-os isn't a real package (no manifest) — label it directly.
+              const packageTitle =
+                packageId === 'start-os'
+                  ? 'StartOS'
+                  : ((await sdk
+                      .getServiceManifest(effects, packageId, (m) => m?.title)
+                      .const()) ?? packageId)
 
               return Promise.all(
                 Object.entries(ifaces).map(
                   async ([interfaceId, connectionString]) => {
-                    let ifaceName = 'UI'
-
-                    if (packageId !== 'startos') {
-                      ifaceName = await sdk.serviceInterface
-                        .get(effects, {
-                          id: interfaceId,
-                          packageId,
-                        }, (i) => i?.name || 'unknown')
-                        .once()
-                    }
+                    const iface = await effects.getServiceInterface({
+                      packageId,
+                      serviceInterfaceId: interfaceId,
+                    })
+                    const ifaceName = iface?.name || 'unknown'
 
                     return {
                       type: 'single' as const,
