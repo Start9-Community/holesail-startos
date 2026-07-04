@@ -1,6 +1,6 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 
-export const v_2_4_1_7 = VersionInfo.of({
+export const current = VersionInfo.of({
   version: '2.4.1:8',
   releaseNotes: {
     en_US: `Updated to the StartOS 2.0 SDK (requires StartOS 0.4.0-beta.10). Tunnels now reach their target service over the internal LXC bridge instead of deprecated container hostnames, and the StartOS admin UI is addressed as a regular service. Adding or removing a tunnel no longer restarts the others. If you had a tunnel to the StartOS UI, re-add it from Manage Tunnels.`,
