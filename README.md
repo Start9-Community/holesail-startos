@@ -42,6 +42,8 @@
 
 Each configured tunnel runs as a separate daemon instance sharing the same container image.
 
+`main` is `setupMain` returning a **`Daemons.dynamic` reconciler** (requires start-sdk ≥ 2.0.4), so the tunnel list is read inside the builder: adding, removing, or editing one tunnel reconciles only that daemon and the service stays `running` — every other tunnel keeps its connection. Each tunnel's target host/port and connection string ride in its `exec.env`, which the reconciler hashes, so an edit restarts precisely the one daemon it changed.
+
 ---
 
 ## Volume and Data Layout
