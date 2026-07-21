@@ -42,6 +42,8 @@
 
 Each configured tunnel runs as a separate daemon instance sharing the same container image.
 
+`main` is `setupMain` returning a **`Daemons.dynamic` reconciler** (requires start-sdk ≥ 2.0.4), so the tunnel list is read inside the builder: adding, removing, or editing one tunnel reconciles only that daemon and the service stays `running` — every other tunnel keeps its connection. Each tunnel's target host/port and connection string ride in its `exec.env`, which the reconciler hashes, so an edit restarts precisely the one daemon it changed.
+
 ---
 
 ## Volume and Data Layout
@@ -77,8 +79,8 @@ All configuration is managed through StartOS actions — there are no user-edita
 | Variable   | Value |
 | ---------- | ----- |
 | `MODE`     | `server` |
-| `PORT`     | Internal port of the tunneled service interface |
-| `HOST`     | `{packageId}.startos` (or `startos` for StartOS UI) |
+| `PORT`     | The target interface's LXC-bridge port (resolved at runtime) |
+| `HOST`     | The target interface's LXC-bridge IPv4 host (resolved at runtime) |
 | `KEY`      | Connection string |
 | `LOG`      | `true` |
 | `NODE_ENV` | `production` |

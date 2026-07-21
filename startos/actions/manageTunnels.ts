@@ -25,11 +25,9 @@ export const inputSpec = InputSpec.of({
                       .getServiceManifest(effects, packageId, (m) => m?.title)
                       .const()) ?? packageId
 
-                  const iFaces = await sdk.serviceInterface
-                    .getAll(effects, { packageId }, (ifaces) =>
-                      ifaces.map((i) => [i.id, i.name]),
-                    )
-                    .once()
+                  const iFaces = Object.values(
+                    await effects.listServiceInterfaces({ packageId }),
+                  ).map((i) => [i.id, i.name] as [string, string])
 
                   if (!iFaces.length) return null
 
@@ -44,9 +42,9 @@ export const inputSpec = InputSpec.of({
               disabled: false,
               variants: Variants.of(
                 Object.fromEntries(
-                  [getSpec('startos', 'StartOS', [['ui', 'UI']])].concat(
-                    entries,
-                  ),
+                  [
+                    getSpec('start-os', 'StartOS', [['admin-ui', 'Admin UI']]),
+                  ].concat(entries),
                 ),
               ),
             }

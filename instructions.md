@@ -8,6 +8,10 @@
 
 Holesail on StartOS runs in **server mode** only. It creates peer-to-peer tunnels over Hyperswarm DHT that expose any interface of any installed StartOS service — or the StartOS UI itself — to a remote Holesail client, without port forwarding, a static IP, or firewall configuration. Connection strings are generated and stored for you; the package exposes no inbound network ports of its own.
 
+## Notes
+
+- **Adding, removing, or editing one tunnel does not restart the others** — only the changed tunnel reconciles, and each tunnel keeps its runtime data in its own area. Connection strings are stable across restarts.
+
 ## Getting set up
 
 1. Open Holesail's **Actions** tab and run **Manage Tunnels**.
