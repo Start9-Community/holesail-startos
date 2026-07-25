@@ -34,10 +34,10 @@
 
 ## Image and Container Runtime
 
-| Property      | Value                           |
-| ------------- | ------------------------------- |
-| Image         | `holesail/holesail` (upstream)  |
-| Architectures | x86_64, aarch64                 |
+| Property      | Value                             |
+| ------------- | --------------------------------- |
+| Image         | `holesail/holesail` (upstream)    |
+| Architectures | x86_64, aarch64                   |
 | Runtime       | Multiple daemons (one per tunnel) |
 
 Each configured tunnel runs as a separate daemon instance sharing the same container image.
@@ -48,10 +48,10 @@ Each configured tunnel runs as a separate daemon instance sharing the same conta
 
 ## Volume and Data Layout
 
-| Volume     | Mount Point          | Purpose                           |
-| ---------- | -------------------- | --------------------------------- |
-| `holesail` | `/usr/src/app/data`  | Holesail data directory           |
-| `startos`  | —                    | StartOS-managed state (`store.json`) |
+| Volume     | Mount Point         | Purpose                              |
+| ---------- | ------------------- | ------------------------------------ |
+| `holesail` | `/usr/src/app/data` | Holesail data directory              |
+| `startos`  | —                   | StartOS-managed state (`store.json`) |
 
 **StartOS-specific files:**
 
@@ -76,14 +76,14 @@ All configuration is managed through StartOS actions — there are no user-edita
 
 **Per-tunnel environment variables (set automatically):**
 
-| Variable   | Value |
-| ---------- | ----- |
-| `MODE`     | `server` |
-| `PORT`     | The target interface's LXC-bridge port (resolved at runtime) |
+| Variable   | Value                                                             |
+| ---------- | ----------------------------------------------------------------- |
+| `MODE`     | `server`                                                          |
+| `PORT`     | The target interface's LXC-bridge port (resolved at runtime)      |
 | `HOST`     | The target interface's LXC-bridge IPv4 host (resolved at runtime) |
-| `KEY`      | Connection string |
-| `LOG`      | `true` |
-| `NODE_ENV` | `production` |
+| `KEY`      | Connection string                                                 |
+| `LOG`      | `true`                                                            |
+| `NODE_ENV` | `production`                                                      |
 
 ### Connection Strings
 
@@ -108,11 +108,11 @@ Holesail exposes no network ports on StartOS. It uses Hyperswarm DHT for peer di
 
 ### Manage Tunnels
 
-| Property     | Value |
-|--------------|-------|
-| ID           | `manage-tunnels` |
-| Visibility   | Enabled |
-| Availability | Any status |
+| Property     | Value                      |
+| ------------ | -------------------------- |
+| ID           | `manage-tunnels`           |
+| Visibility   | Enabled                    |
+| Availability | Any status                 |
 | Purpose      | Add and remove P2P tunnels |
 
 **How it works:**
@@ -124,12 +124,12 @@ Holesail exposes no network ports on StartOS. It uses Hyperswarm DHT for peer di
 
 ### View Connections
 
-| Property     | Value |
-|--------------|-------|
-| ID           | `view-connections` |
+| Property     | Value                                           |
+| ------------ | ----------------------------------------------- |
+| ID           | `view-connections`                              |
 | Visibility   | Enabled (if tunnels exist) / Disabled otherwise |
-| Availability | Any status |
-| Purpose      | Display connection strings for sharing |
+| Availability | Any status                                      |
+| Purpose      | Display connection strings for sharing          |
 
 **Output:** Lists all configured tunnels with service/interface name, connection string (masked, copyable), and QR code.
 
@@ -151,8 +151,8 @@ Holesail exposes no network ports on StartOS. It uses Hyperswarm DHT for peer di
 
 ## Health Checks
 
-| Check      | Display Name                    | Method                              |
-| ---------- | ------------------------------- | ----------------------------------- |
+| Check      | Display Name                    | Method                             |
+| ---------- | ------------------------------- | ---------------------------------- |
 | Per-tunnel | `{Service Title} - {Interface}` | Always succeeds when daemon starts |
 
 Each configured tunnel has its own health check displayed in the StartOS UI with the message "Tunnel is working".
@@ -190,7 +190,7 @@ None. Holesail is a standalone tunneling service.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and development workflow.
+Build and development workflow follow the StartOS packaging guide: <https://docs.start9.com/packaging>. Keep `README.md`, `instructions.md`, and `AGENTS.md` in sync with any change to user-visible behavior or package structure.
 
 ---
 
