@@ -1,7 +1,7 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '2.4.1:9',
+  version: '2.4.1:10',
   releaseNotes: {
     en_US: `Updated to the StartOS 2.0 SDK (requires StartOS 0.4.0-beta.10). Tunnels now reach their target service over the internal LXC bridge instead of deprecated container hostnames, and the StartOS admin UI is addressed as a regular service. Adding or removing a tunnel no longer restarts the others. If you had a tunnel to the StartOS UI, re-add it from Manage Tunnels.`,
     es_ES: `Actualizado al SDK 2.0 de StartOS (requiere StartOS 0.4.0-beta.10). Los túneles ahora alcanzan su servicio de destino a través del puente LXC interno en lugar de nombres de host de contenedor obsoletos, y la interfaz de administración de StartOS se direcciona como un servicio normal. Añadir o quitar un túnel ya no reinicia los demás. Si tenías un túnel a la interfaz de StartOS, vuelve a añadirlo desde Gestionar túneles.`,
