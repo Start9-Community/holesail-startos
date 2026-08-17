@@ -6,8 +6,11 @@ Develop it inside a StartOS packaging workspace created by `start-cli s9pk init-
 which provides the packaging guide and agent context one level up. If you're reading this in a
 bare clone with no workspace, the full guide is at <https://docs.start9.com/packaging>.
 
-Work this package's `TODO.md` from top to bottom. Keep `README.md` (architecture, for developers and LLMs) and `instructions.md` (end-user docs) in sync with your changes.
+Work this package's `TODO.md` from top to bottom. Keep `README.md` (technical reference for an AI support or administering agent) and `instructions.md` (end-user docs) in sync with your changes.
 
-## Inspecting a running install
+## This repo
 
-To run a command inside a service's container (read its generated config, grep app logs), use `start-cli package attach <id> -n <subcontainer-name> -- <cmd>`. Select the subcontainer by **name** with `-n` (the name passed to `SubContainer.of` in `main.ts`, e.g. `-n web`) or by image with `-i`. Note: `-s/--subcontainer` matches the internal **Guid**, not the name, so passing a name to `-s` fails with "no matching subcontainers". A service with more than one subcontainer requires a selector; with none given, `attach` falls back to an interactive picker that panics in a non-TTY shell — that's the missing selector, not a TTY requirement.
+- **Keep the per-tunnel state in `exec.env`.** The reconciler hashes it, so editing one tunnel's connection string or target restarts just that daemon.
+- **Subcontainers must stay lazy handles, one per tunnel, each on its own volume subpath.** Dynamic reconcile needs lazy handles so unchanged daemons never re-materialize, and separate subpaths are what stop independent tunnels contending for the same files mid-reconcile.
+- **`effects.getServiceInterface` here is a deliberate exception to host-first addressing.** Holesail can tunnel any installed package's interface, known only by id, and no effect enumerates a package's hosts — so the interface is read directly to obtain the host id, and everything after that is ordinary bridge addressing.
+- **Connection strings must stay stable across restarts.** They are the credential a remote client holds; regenerating one silently breaks every client using it.

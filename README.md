@@ -4,13 +4,15 @@
 
 # Holesail on StartOS
 
-> **Upstream docs:** <https://docs.holesail.io/>
->
 > Everything not listed in this document should behave the same as upstream
-> Holesail. If a feature, setting, or behavior is not mentioned
-> here, the upstream documentation is accurate and fully applicable.
+> Holesail. If a feature, setting, or behavior is not mentioned here, the
+> upstream documentation is accurate and fully applicable — see the
+> Documentation section of `instructions.md` for links.
 
-[Holesail](https://github.com/holesail/holesail) is a peer-to-peer tunneling system that creates direct, encrypted connections between devices using Hyperswarm DHT. No port forwarding, static IPs, or firewall configuration required.
+[Holesail](https://github.com/holesail/holesail-docker/) makes a peer-to-peer tunnel over a DHT, so a remote client can reach a service without port forwarding, a static IP, or a firewall change. This package runs it in **server mode only**, and can tunnel any interface of any installed service — or the StartOS admin interface itself.
+
+- **Upstream repo:** <https://github.com/holesail/holesail-docker/>
+- **Wrapper repo:** <https://github.com/Start9-Community/holesail-startos>
 
 ---
 
@@ -18,179 +20,152 @@
 
 - [Image and Container Runtime](#image-and-container-runtime)
 - [Volume and Data Layout](#volume-and-data-layout)
-- [Installation and First-Run Flow](#installation-and-first-run-flow)
-- [Configuration Management](#configuration-management)
-- [Network Access and Interfaces](#network-access-and-interfaces)
-- [Actions (StartOS UI)](#actions-startos-ui)
-- [Backups and Restore](#backups-and-restore)
-- [Health Checks](#health-checks)
+- [File Models](#file-models)
 - [Dependencies](#dependencies)
+- [Network Access and Interfaces](#network-access-and-interfaces)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
+- [Actions](#actions)
+- [Tasks](#tasks)
+- [Health Checks](#health-checks)
+- [Backups and Restore](#backups-and-restore)
 - [Limitations and Differences](#limitations-and-differences)
-- [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
-- [Contributing](#contributing)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
 
 ## Image and Container Runtime
 
-| Property      | Value                             |
-| ------------- | --------------------------------- |
-| Image         | `holesail/holesail` (upstream)    |
-| Architectures | x86_64, aarch64                   |
-| Runtime       | Multiple daemons (one per tunnel) |
+One upstream image, consumed unmodified — but the daemon set is not fixed.
 
-Each configured tunnel runs as a separate daemon instance sharing the same container image.
+| Property      | Value                                      |
+| ------------- | ------------------------------------------ |
+| Image         | `holesail/holesail`                        |
+| Architectures | x86_64, aarch64                            |
+| Entrypoint    | The image's own, via `sdk.useEntrypoint()` |
 
-`main` is `setupMain` returning a **`Daemons.dynamic` reconciler** (requires start-sdk ≥ 2.0.4), so the tunnel list is read inside the builder: adding, removing, or editing one tunnel reconciles only that daemon and the service stays `running` — every other tunnel keeps its connection. Each tunnel's target host/port and connection string ride in its `exec.env`, which the reconciler hashes, so an edit restarts precisely the one daemon it changed.
+| Subcontainer                     | Purpose                   |
+| -------------------------------- | ------------------------- |
+| `holesail-<package>-<interface>` | One per configured tunnel |
 
----
+**There is one daemon and one subcontainer per tunnel, built dynamically from the stored list.** A fresh install with no tunnels runs nothing at all; adding three tunnels runs three daemons. The subcontainer names are derived from the target, so an agent cannot know them in advance — read the configured tunnels to find them.
+
+**Adding, removing, or editing one tunnel touches only that tunnel.** The daemon set is reconciled rather than rebuilt, so the others keep running throughout — which matters, because tearing them all down would drop every remote connection to reconfigure one.
 
 ## Volume and Data Layout
 
-| Volume     | Mount Point         | Purpose                              |
-| ---------- | ------------------- | ------------------------------------ |
-| `holesail` | `/usr/src/app/data` | Holesail data directory              |
-| `startos`  | —                   | StartOS-managed state (`store.json`) |
+Two volumes.
 
-**StartOS-specific files:**
+| Volume     | Mount Point         | Purpose                                  |
+| ---------- | ------------------- | ---------------------------------------- |
+| `holesail` | `/usr/src/app/data` | Runtime data, **one subpath per tunnel** |
+| `startos`  | not mounted         | The tunnel list                          |
 
-- `store.json` — tunnel configurations mapping services and interfaces to connection strings
+**Each tunnel mounts its own subpath**, not the volume root. That is what keeps independent tunnels from contending for the same files when one of them reconciles.
 
----
+The tunnel list is kept on a separate volume the containers cannot see, since it is the package's record rather than the application's state.
 
-## Installation and First-Run Flow
+## File Models
 
-Holesail on StartOS operates in **server mode only**, creating P2P tunnels to expose your StartOS services to remote clients.
+One model, and its shape is unusual: it has no fixed fields at all.
 
-1. Install Holesail
-2. Run "Manage Tunnels" action to select which services to expose
-3. Run "View Connections" action to get connection strings
-4. Share connection strings with clients who need access
+| File         | Format | Modelled                | Written by                |
+| ------------ | ------ | ----------------------- | ------------------------- |
+| `store.json` | JSON   | Yes — `FileHelper.json` | The Manage Tunnels action |
 
----
+It is a **nested map**, keyed by package id and then by interface id, whose values are connection strings. Every tunnel is one entry, and the daemon set is generated from it directly — the store _is_ the configuration.
 
-## Configuration Management
+**The connection string is the credential.** It is generated when a tunnel is created and encodes whether the tunnel is public or private; anyone holding it can reach the tunnelled interface from anywhere. It is stable across restarts, so it does not need re-sharing.
 
-All configuration is managed through StartOS actions — there are no user-editable config files.
-
-**Per-tunnel environment variables (set automatically):**
-
-| Variable   | Value                                                             |
-| ---------- | ----------------------------------------------------------------- |
-| `MODE`     | `server`                                                          |
-| `PORT`     | The target interface's LXC-bridge port (resolved at runtime)      |
-| `HOST`     | The target interface's LXC-bridge IPv4 host (resolved at runtime) |
-| `KEY`      | Connection string                                                 |
-| `LOG`      | `true`                                                            |
-| `NODE_ENV` | `production`                                                      |
-
-### Connection Strings
-
-StartOS generates connection strings in the format:
-
-```
-hs://{visibility}000{42-character-key}
-```
-
-- `hs://0000...` — Public tunnel (discoverable)
-- `hs://s000...` — Private tunnel (requires the exact key)
-
----
-
-## Network Access and Interfaces
-
-Holesail exposes no network ports on StartOS. It uses Hyperswarm DHT for peer discovery and creates direct peer-to-peer connections. Clients connect using Holesail client apps with connection strings obtained from the "View Connections" action.
-
----
-
-## Actions (StartOS UI)
-
-### Manage Tunnels
-
-| Property     | Value                      |
-| ------------ | -------------------------- |
-| ID           | `manage-tunnels`           |
-| Visibility   | Enabled                    |
-| Availability | Any status                 |
-| Purpose      | Add and remove P2P tunnels |
-
-**How it works:**
-
-1. Select a service (any installed StartOS service, or StartOS itself)
-2. Select an interface from that service
-3. Choose public or private visibility
-4. Save to create/update tunnels
-
-### View Connections
-
-| Property     | Value                                           |
-| ------------ | ----------------------------------------------- |
-| ID           | `view-connections`                              |
-| Visibility   | Enabled (if tunnels exist) / Disabled otherwise |
-| Availability | Any status                                      |
-| Purpose      | Display connection strings for sharing          |
-
-**Output:** Lists all configured tunnels with service/interface name, connection string (masked, copyable), and QR code.
-
----
-
-## Backups and Restore
-
-**Included in backup:**
-
-- `holesail` volume — Holesail data
-- `startos` volume — tunnel configurations
-
-**Restore behavior:**
-
-- All tunnel configurations are restored
-- Connection strings are preserved (clients don't need new strings)
-
----
-
-## Health Checks
-
-| Check      | Display Name                    | Method                             |
-| ---------- | ------------------------------- | ---------------------------------- |
-| Per-tunnel | `{Service Title} - {Interface}` | Always succeeds when daemon starts |
-
-Each configured tunnel has its own health check displayed in the StartOS UI with the message "Tunnel is working".
-
----
+Nothing else is modelled — the application has no configuration of its own here beyond the environment each daemon is given.
 
 ## Dependencies
 
-None. Holesail is a standalone tunneling service.
+None declared, and that is deliberate rather than incidental: Holesail can tunnel **any** installed service, so no fixed set could be declared. What it tunnels is chosen at run time, and a target that is uninstalled simply stops resolving.
 
----
+## Network Access and Interfaces
+
+**None.** `setInterfaces` returns an empty array — the package binds no port and publishes no address.
+
+That is the point of it. Reachability comes from the peer-to-peer network rather than from an address on this box, which is why it needs no port forwarding and exposes no new inbound surface locally.
+
+**Tunnel targets are reached over the internal bridge**, the same as any other service-to-service call. The package resolves the chosen interface by id, finds its host, and dials the bridge address.
+
+That resolution is the one place this package does something unusual: because it can tunnel an interface it knows only by id — with no way to enumerate a package's hosts — it reads the interface directly rather than going host-first. Once it has the host, the addressing is ordinary.
+
+**The StartOS admin interface is tunnellable too**, and is special-cased because it is not an installed package.
+
+## Installation and First-Run Flow
+
+Install raises a critical task to create the first tunnel. Until then there is nothing to run: **the daemon set is empty, so the service has nothing to start.**
+
+The task is **reactive** — keyed on the tunnel list being empty, not on install — so removing every tunnel brings it back rather than leaving a service that runs nothing with no prompt.
+
+Creating a tunnel generates its connection string; the remote end needs a Holesail client and that string, and nothing else.
+
+## Actions
+
+Two actions.
+
+### Manage Tunnels
+
+Creates, edits, and removes tunnels. This is the whole of configuration.
+
+- **What it changes:** the tunnel list, and through it the daemon set.
+- **Cost:** only the changed tunnel reconciles. Others keep running, and their connections survive.
+- **Repeat safety:** idempotent.
+- **Each tunnel picks a service and one of its interfaces**, and is marked public or private — a distinction carried inside the generated connection string.
+- **A new connection string is generated per tunnel**, and is what a remote client needs.
+
+### View Connections
+
+Shows the connection strings for the configured tunnels.
+
+- **Hidden until at least one tunnel exists** — there is nothing to show before that.
+- **What it changes:** nothing. It is a read.
+- **Repeat safety:** read-only, and the strings are stable, so re-running returns the same values.
+- **These are credentials.** Anyone holding one can reach the tunnelled interface.
+
+## Tasks
+
+One, and it is reactive.
+
+| Task           | Severity   | Raised when               | Cleared when        |
+| -------------- | ---------- | ------------------------- | ------------------- |
+| Manage Tunnels | `critical` | No tunnels are configured | A tunnel is created |
+
+`critical` blocks the service from starting and suspends the ordinary controls — which is honest here, since a Holesail with no tunnels has nothing to do.
+
+## Health Checks
+
+One check per tunnel, named for what it tunnels.
+
+| Check                   | Displayed as              | Method                                |
+| ----------------------- | ------------------------- | ------------------------------------- |
+| `<package>-<interface>` | "<Service> - <Interface>" | Reports success while the daemon runs |
+
+**The check does not probe the tunnel**, and that is worth knowing: it reports success whenever its daemon is up. So a green check means Holesail is running for that tunnel, not that a remote client can currently connect — the peer-to-peer path, the target service, and the client are all outside what it observes.
+
+There is no aggregate check. A service with no tunnels shows none at all.
+
+## Backups and Restore
+
+Both volumes are copied wholesale — `sdk.Backups.ofVolumes('holesail', 'startos')`.
+
+**The backup contains every connection string**, which are the credentials for reaching the tunnelled services. Treat it accordingly.
+
+A restored instance comes back with the same tunnels and the same connection strings, so **remote clients keep working without being re-paired** — which is the main reason the strings are stable rather than regenerated.
+
+Tunnels whose target service is not present on the restored server simply fail to resolve and run nothing, rather than blocking the rest.
 
 ## Limitations and Differences
 
-1. **Server mode only** — cannot use as a client to connect to external Holesail services
-2. **No CLI access** — all configuration via StartOS actions (no direct holesail command)
-3. **No custom ports** — tunnels use internal service ports automatically
-4. **No UDP tunnels** — TCP only (upstream supports both)
-5. **No file sharing** — upstream's file transfer feature not exposed
-6. **No network interfaces** — Holesail uses DHT for discovery; no ports exposed on StartOS
-
----
-
-## What Is Unchanged from Upstream
-
-- Peer-to-peer architecture (no relay servers)
-- Hyperswarm DHT for peer discovery
-- End-to-end encryption (automatic, always enabled)
-- Zero-configuration networking
-- Public and private tunnel options
-- Connection string format and compatibility
-- Cross-platform client compatibility
-
----
-
-## Contributing
-
-Build and development workflow follow the StartOS packaging guide: <https://docs.start9.com/packaging>. Keep `README.md`, `instructions.md`, and `AGENTS.md` in sync with any change to user-visible behavior or package structure.
+1. **Server mode only.** This package does not run a Holesail client.
+2. **No local interface at all.** Everything is reached over the peer-to-peer network.
+3. **Connection strings are credentials**, are stable, and are in the backup.
+4. **The health check does not test connectivity**, only that the daemon is running.
+5. **A tunnel's target is resolved by interface id**, so removing or renaming an interface on the target service silently stops that tunnel from resolving.
+6. **The subcontainer names are derived from the tunnel**, so they vary per install.
+7. **The service runs nothing until a tunnel is configured**, and its task returns if you remove them all.
 
 ---
 
@@ -199,20 +174,30 @@ Build and development workflow follow the StartOS packaging guide: <https://docs
 ```yaml
 package_id: holesail
 image: holesail/holesail
-architectures: [x86_64, aarch64]
+architectures:
+  - x86_64
+  - aarch64
+subcontainers: # one per tunnel, named holesail-<packageId>-<interfaceId>
+  - holesail-<packageId>-<interfaceId>
 volumes:
-  holesail: /usr/src/app/data
-  startos: (StartOS state)
-ports: none
-dependencies: none
-startos_managed_env_vars:
+  holesail: /usr/src/app/data # one subpath per tunnel
+  startos: not mounted # holds store.json
+file_models:
+  - store.json # nested map: packageId -> interfaceId -> connection string
+startos_managed_env_vars: # per tunnel daemon
   - MODE
   - PORT
   - HOST
   - KEY
   - LOG
   - NODE_ENV
+dependencies: [] # can tunnel any installed service; none can be declared
+interfaces: {} # none; reachability is peer-to-peer
 actions:
   - manage-tunnels
-  - view-connections
+  - view-connections # hidden until a tunnel exists
+tasks:
+  - { action: manage-tunnels, severity: critical } # reactive on an empty tunnel list
+health_checks: # one per tunnel; reports the daemon, not connectivity
+  - <packageId>-<interfaceId>
 ```
