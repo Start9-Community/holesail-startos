@@ -92,7 +92,11 @@ That is the point of it. Reachability comes from the peer-to-peer network rather
 
 That resolution is the one place this package does something unusual: because it can tunnel an interface it knows only by id — with no way to enumerate a package's hosts — it reads the interface directly rather than going host-first. Once it has the host, the addressing is ordinary.
 
-**The StartOS admin interface is tunnellable too**, and is special-cased because it is not an installed package.
+**The StartOS admin interface is tunnellable too**, and is special-cased because it is not an installed package. Its tunnel dials the UI's plain-HTTP bridge address, `10.0.3.1:80`.
+
+**Each daemon publishes its target `host:port` in its DHT record, and a client given no `--host`/`--port` listens on that address.** `10.0.3.1` does not exist on the client, so an unflagged `holesail <connection string>` exits with `EADDRNOTAVAIL`; the client must pick its own listen address.
+
+**StartOS UI logins are bound to the hostname the browser is on.** Through a tunnel, only `localhost` and `127.0.0.1` on the client device are names StartOS accepts; any other (the client device's LAN IP, say) fails sign-in with "invalid request signature".
 
 ## Installation and First-Run Flow
 
@@ -166,6 +170,9 @@ Tunnels whose target service is not present on the restored server simply fail t
 5. **A tunnel's target is resolved by interface id**, so removing or renaming an interface on the target service silently stops that tunnel from resolving.
 6. **The subcontainer names are derived from the tunnel**, so they vary per install.
 7. **The service runs nothing until a tunnel is configured**, and its task returns if you remove them all.
+8. **Clients must be told where to listen** (`--host`/`--port` on the CLI); the address the daemon advertises exists only on the server.
+9. **The StartOS UI tunnel needs StartOS 0.4.0.2 or later.** Earlier releases drop bridge traffic to the UI, so the client connects but no page ever loads.
+10. **Sign in to the StartOS UI only at `localhost` or `127.0.0.1`** on the client device.
 
 ---
 
