@@ -18,15 +18,23 @@ Freshly scaffolded? Work the
 guide page, not a file in this repo — read it, don't copy it in.
 
 Keep `README.md` (technical reference for an AI support or administering agent) and
-`instructions.md` (end-user docs) in sync with your changes.
+`instructions.md` (end-user docs) in sync with your changes. This file restates neither:
+whoever changes the package has both, so it carries only what they don't — repo mechanics,
+a change that looks right and is not, where the next thing gets added, a naming trap, a
+build or test invocation particular to this repo.
 
-**Bugs and feature requests are GitHub issues on this repo** — file them as you find them.
+**Fix a defect you spot rather than reporting it** — you have the package open and the
+context to be sure. File **a GitHub issue on this repo** only when the call isn't yours to
+make: you can't pin the cause down, two defensible fixes exist, or it's too large to ride on
+the work in hand. An open issue is a report, not a queue — implement one when you're asked
+to or when it's labelled `Approved`, then close it with `Closes #<n>`.
+
 Don't record work in the repo instead: no `TODO.md`, no `NOTES.md`, no `PLAN.md`. What you
 verified, tried, and decided belongs in the commit message and the PR body.
 
 ## This repo
 
-- **Keep the per-tunnel state in `exec.env`.** The reconciler hashes it, so editing one tunnel's connection string or target restarts just that daemon.
-- **Subcontainers must stay lazy handles, one per tunnel, each on its own volume subpath.** Dynamic reconcile needs lazy handles so unchanged daemons never re-materialize, and separate subpaths are what stop independent tunnels contending for the same files mid-reconcile.
-- **`effects.getServiceInterface` here is a deliberate exception to host-first addressing.** Holesail can tunnel any installed package's interface, known only by id, and no effect enumerates a package's hosts — so the interface is read directly to obtain the host id, and everything after that is ordinary bridge addressing.
-- **Connection strings must stay stable across restarts.** They are the credential a remote client holds; regenerating one silently breaks every client using it.
+- **Keep per-tunnel state in `exec.env`** — the reconciler hashes it, so editing one tunnel restarts only that daemon.
+- **Keep one lazy subcontainer per tunnel, each on its own volume subpath** — dynamic reconcile needs lazy handles, and shared files would contend mid-reconcile.
+- **Don't convert the `effects.getServiceInterface` read in `main.ts` to host-first addressing** — a tunnel's target is known only by interface id, and no effect lists a package's hosts.
+- **Regenerate an existing tunnel's connection string only when its Public setting changes** — it is the credential every remote client holds, and it encodes the mode.

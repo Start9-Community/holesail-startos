@@ -74,7 +74,7 @@ One model, and its shape is unusual: it has no fixed fields at all.
 
 It is a **nested map**, keyed by package id and then by interface id, whose values are connection strings. Every tunnel is one entry, and the daemon set is generated from it directly — the store _is_ the configuration.
 
-**The connection string is the credential.** It is generated when a tunnel is created and encodes whether the tunnel is public or private; anyone holding it can reach the tunnelled interface from anywhere. It is stable across restarts, so it does not need re-sharing.
+**The connection string is the credential.** It is generated when a tunnel is created and encodes whether the tunnel is public or private; anyone holding it can reach the tunnelled interface from anywhere. It is stable across restarts, so it does not need re-sharing; only switching the tunnel between public and private replaces it.
 
 Nothing else is modelled — the application has no configuration of its own here beyond the environment each daemon is given.
 
@@ -119,6 +119,7 @@ Creates, edits, and removes tunnels. This is the whole of configuration.
 - **Repeat safety:** idempotent.
 - **Each tunnel picks a service and one of its interfaces**, and is marked public or private — a distinction carried inside the generated connection string.
 - **A new connection string is generated per tunnel**, and is what a remote client needs.
+- **Changing an existing tunnel's Public setting replaces its connection string**, and the toggle warns before it changes. Every client of that tunnel then needs the new string.
 
 ### View Connections
 
@@ -171,8 +172,7 @@ Tunnels whose target service is not present on the restored server simply fail t
 6. **The subcontainer names are derived from the tunnel**, so they vary per install.
 7. **The service runs nothing until a tunnel is configured**, and its task returns if you remove them all.
 8. **Clients must be told where to listen** (`--host`/`--port` on the CLI); the address the daemon advertises exists only on the server.
-9. **The StartOS UI tunnel needs StartOS 0.4.0.2 or later.** Earlier releases drop bridge traffic to the UI, so the client connects but no page ever loads.
-10. **Sign in to the StartOS UI only at `localhost` or `127.0.0.1`** on the client device.
+9. **Sign in to the StartOS UI only at `localhost` or `127.0.0.1`** on the client device.
 
 ---
 

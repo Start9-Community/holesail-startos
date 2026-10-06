@@ -2,7 +2,7 @@ import { z } from '@start9labs/start-sdk'
 import { shape, storeJson } from '../fileModels/store.json'
 import { i18n } from '../i18n'
 import { sdk } from '../sdk'
-import { getRandomConnectionString } from '../utils'
+import { getRandomConnectionString, isPublic } from '../utils'
 
 const { InputSpec, Value, List, Variants } = sdk
 
@@ -16,6 +16,7 @@ export const inputSpec = InputSpec.of({
         spec: InputSpec.of({
           service: Value.dynamicUnion(async ({ effects }) => {
             const packages = await sdk.getInstalledPackages(effects)
+            const store = (await storeJson.read().once()) || {}
 
             const entries = (
               await Promise.all(
@@ -31,19 +32,24 @@ export const inputSpec = InputSpec.of({
 
                   if (!iFaces.length) return null
 
-                  return getSpec(packageId, title, iFaces)
+                  return getSpec(packageId, title, iFaces, !!store[packageId])
                 }),
               )
             ).filter((e): e is NonNullable<typeof e> => e !== null)
 
             return {
               name: i18n('Service'),
-              default: '',
+              default: null,
               disabled: false,
               variants: Variants.of(
                 Object.fromEntries(
                   [
-                    getSpec('start-os', 'StartOS', [['admin-ui', 'Admin UI']]),
+                    getSpec(
+                      'start-os',
+                      'StartOS',
+                      [['admin-ui', 'Admin UI']],
+                      !!store['start-os'],
+                    ),
                   ].concat(entries),
                 ),
               ),
@@ -83,7 +89,7 @@ export const manageTunnels = sdk.Action.withInput(
             selection: packageId,
             value: {
               iface: interfaceId,
-              isPublic: connectionString.charAt(5) === '0',
+              isPublic: isPublic(connectionString),
             },
           },
         })),
@@ -106,10 +112,12 @@ export const manageTunnels = sdk.Action.withInput(
         }
       }
 
+      const existing = store[selection]?.[value.iface]
       const iface: z.infer<typeof shape>[''] = {
         [value.iface]:
-          store[selection]?.[value.iface] ||
-          getRandomConnectionString(value.isPublic),
+          existing && isPublic(existing) === value.isPublic
+            ? existing
+            : getRandomConnectionString(value.isPublic),
       }
 
       if (!toSave[selection]) {
@@ -126,7 +134,12 @@ export const manageTunnels = sdk.Action.withInput(
   },
 )
 
-function getSpec(packageId: string, packageTitle: string, iFaces: string[][]) {
+function getSpec(
+  packageId: string,
+  packageTitle: string,
+  iFaces: string[][],
+  hasTunnel: boolean,
+) {
   return [
     packageId,
     {
@@ -134,11 +147,16 @@ function getSpec(packageId: string, packageTitle: string, iFaces: string[][]) {
       spec: InputSpec.of({
         iface: Value.select({
           name: i18n('Service Interface'),
-          default: '',
+          default: null,
           values: Object.fromEntries(iFaces),
         }),
         isPublic: Value.toggle({
           name: i18n('Public'),
+          warning: hasTunnel
+            ? i18n(
+                'Changing this on an existing tunnel replaces its connection string. Every client of that tunnel then needs the new one from View Connections.',
+              )
+            : null,
           default: false,
         }),
       }),

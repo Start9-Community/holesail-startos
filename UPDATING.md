@@ -30,14 +30,10 @@ The `holesail` CLI/server is published as an npm package by [holesail/holesail](
   curl -fsSL "https://hub.docker.com/v2/repositories/holesail/holesail/tags?page_size=20&ordering=last_updated" | jq -r '.results[].name'
   ```
 
-The currently recorded upstream version lives in the StartOS package version, in [`startos/versions/index.ts`](startos/versions/index.ts) (which file it imports as `current`) — e.g. `v2.4.1.7.ts` means upstream `2.4.1`.
+The currently recorded upstream version is the upstream part of the `version` string in [`startos/versions/current.ts`](startos/versions/current.ts) — e.g. `2.4.1:12` means upstream `2.4.1`.
 
 ## Applying the bump
 
-The image tag is `:latest`, so no `dockerTag` or `Dockerfile` change is needed. Rename and edit the version file to reflect the new upstream:
-
-1. Rename `startos/versions/v<OLD>.ts` to `startos/versions/v<NEW>.<N>.ts` (e.g. `v2.4.1.7.ts` → `v2.5.0.1.ts`).
-2. In that file, update the export name, the `version` string (`'<NEW>:<N>'`), and `releaseNotes` for every locale.
-3. In [`startos/versions/index.ts`](startos/versions/index.ts), update the `import` path and the `current:` symbol to match.
+The image tag is `:latest`, so no `dockerTag` or `Dockerfile` change is needed. Edit [`startos/versions/current.ts`](startos/versions/current.ts) in place: set the `version` string to `'<NEW>:0'` and rewrite `releaseNotes` for every locale.
 
 No migration is required for a pure upstream bump; leave `other: []` and the `up`/`down` migration stubs as they are.
