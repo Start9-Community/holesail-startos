@@ -30,3 +30,6 @@ export function getRandomConnectionString(isPublic: boolean) {
 
   return `hs://${isPublic ? '0' : 's'}000${key}`
 }
+
+export const isPublic = (connectionString: string) =>
+  connectionString.charAt(5) === '0'

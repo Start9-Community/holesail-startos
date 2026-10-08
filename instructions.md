@@ -17,7 +17,7 @@ Holesail on StartOS runs in **server mode** only. It creates peer-to-peer tunnel
 
 1. Open Holesail's **Actions** tab and run **Manage Tunnels**.
 2. Click **Add** to create a tunnel. Pick a **Service** (any installed service, or **StartOS** for the StartOS UI), pick a **Service Interface**, and toggle **Public** on or off — public tunnels are discoverable on the DHT, private tunnels require the exact connection string.
-3. Save. A connection string is generated and a tunnel daemon starts.
+3. Save. A connection string is generated and a tunnel daemon starts. Switching **Public** on an existing tunnel later replaces its connection string, so every client of that tunnel needs the new one.
 4. Run **View Connections** to retrieve a connection string. Each entry is masked, copyable, and offers a QR code. Share it with the client device that needs to reach the service.
 5. On the client device, install a Holesail client (see the upstream docs) and connect using the string. With the `holesail` command-line client, choose where it listens:
 

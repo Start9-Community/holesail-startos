@@ -2,8 +2,6 @@ import { LangDict } from './default'
 
 export default {
   es_ES: {
-    0: '¡Iniciando Holesail!',
-    1: 'El almacén está vacío',
     2: 'El túnel está funcionando',
     3: 'Túneles',
     4: 'Servicio',
@@ -16,10 +14,9 @@ export default {
     11: 'No tiene túneles',
     12: 'Conexiones',
     13: 'Cree su primer túnel',
+    14: 'Cambiar esto en un túnel existente reemplaza su cadena de conexión. Cada cliente de ese túnel necesitará entonces la nueva, que se obtiene en Ver conexiones.',
   },
   de_DE: {
-    0: 'Holesail wird gestartet!',
-    1: 'Speicher ist leer',
     2: 'Tunnel funktioniert',
     3: 'Tunnel',
     4: 'Dienst',
@@ -32,10 +29,9 @@ export default {
     11: 'Sie haben keine Tunnel',
     12: 'Verbindungen',
     13: 'Erstellen Sie Ihren ersten Tunnel',
+    14: 'Wenn Sie dies bei einem bestehenden Tunnel ändern, wird seine Verbindungszeichenfolge ersetzt. Jeder Client dieses Tunnels braucht dann die neue aus Verbindungen anzeigen.',
   },
   pl_PL: {
-    0: 'Uruchamianie Holesail!',
-    1: 'Magazyn jest pusty',
     2: 'Tunel działa',
     3: 'Tunele',
     4: 'Usługa',
@@ -48,10 +44,9 @@ export default {
     11: 'Nie masz tuneli',
     12: 'Połączenia',
     13: 'Utwórz swój pierwszy tunel',
+    14: 'Zmiana tego ustawienia w istniejącym tunelu zastępuje jego ciąg połączenia. Każdy klient tego tunelu potrzebuje wtedy nowego ciągu z Wyświetl połączenia.',
   },
   fr_FR: {
-    0: 'Démarrage de Holesail !',
-    1: 'Le stockage est vide',
     2: 'Le tunnel fonctionne',
     3: 'Tunnels',
     4: 'Service',
@@ -64,5 +59,6 @@ export default {
     11: "Vous n'avez pas de tunnels",
     12: 'Connexions',
     13: 'Créez votre premier tunnel',
+    14: 'Modifier ce réglage sur un tunnel existant remplace sa chaîne de connexion. Chaque client de ce tunnel a alors besoin de la nouvelle, disponible dans Voir les connexions.',
   },
 } satisfies Record<string, LangDict>

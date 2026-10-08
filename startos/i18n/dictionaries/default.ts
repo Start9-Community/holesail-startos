@@ -1,8 +1,6 @@
 export const DEFAULT_LANG = 'en_US'
 
 const dict = {
-  'Starting Holesail!': 0,
-  'Store is empty': 1,
   'Tunnel is working': 2,
   Tunnels: 3,
   Service: 4,
@@ -15,6 +13,7 @@ const dict = {
   'You have no tunnels': 11,
   Connections: 12,
   'Create your first tunnel': 13,
+  'Changing this on an existing tunnel replaces its connection string. Every client of that tunnel then needs the new one from View Connections.': 14,
 } as const
 
 export type I18nKey = keyof typeof dict
