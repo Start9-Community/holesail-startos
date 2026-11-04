@@ -34,6 +34,4 @@ The currently recorded upstream version is the upstream part of the `version` st
 
 ## Applying the bump
 
-The image tag is `:latest`, so no `dockerTag` or `Dockerfile` change is needed. Edit [`startos/versions/current.ts`](startos/versions/current.ts) in place: set the `version` string to `'<NEW>:0'` and rewrite `releaseNotes` for every locale.
-
-No migration is required for a pure upstream bump; leave `other: []` and the `up`/`down` migration stubs as they are.
+The image tag is `:latest`, so no `dockerTag` or `Dockerfile` change is needed. Set the upstream part of the `version` string in [`startos/versions/current.ts`](startos/versions/current.ts) to the new release.
