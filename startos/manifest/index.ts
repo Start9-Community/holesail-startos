@@ -13,7 +13,10 @@ export const manifest = setupManifest({
   volumes: ['holesail', 'startos'],
   images: {
     holesail: {
-      source: { dockerTag: 'holesail/holesail:latest' },
+      source: {
+        dockerTag:
+          'holesail/holesail:sha-ac43540@sha256:894caad71cc3a765d6bffa014370b1d5d881507aa4e1b4f886755242db81389c',
+      },
       arch: ['x86_64', 'aarch64'],
     },
   },
