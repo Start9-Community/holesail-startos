@@ -57,6 +57,7 @@ export const viewConnections = sdk.Action.withoutInput(
                       masked: true,
                       copyable: true,
                       qr: true,
+                      launchable: false,
                     }
                   },
                 ),

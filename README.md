@@ -37,11 +37,11 @@
 
 One upstream image, consumed unmodified — but the daemon set is not fixed.
 
-| Property      | Value                                      |
-| ------------- | ------------------------------------------ |
-| Image         | `holesail/holesail`                        |
-| Architectures | x86_64, aarch64                            |
-| Entrypoint    | The image's own, via `sdk.useEntrypoint()` |
+| Property      | Value                                          |
+| ------------- | ---------------------------------------------- |
+| Image         | `holesail/holesail:sha-ac43540`, digest-pinned |
+| Architectures | x86_64, aarch64                                |
+| Entrypoint    | The image's own, via `sdk.useEntrypoint()`     |
 
 | Subcontainer                     | Purpose                   |
 | -------------------------------- | ------------------------- |
@@ -180,7 +180,7 @@ Tunnels whose target service is not present on the restored server simply fail t
 
 ```yaml
 package_id: holesail
-image: holesail/holesail
+image: holesail/holesail:sha-ac43540 # pinned by digest in startos/manifest/index.ts
 architectures:
   - x86_64
   - aarch64

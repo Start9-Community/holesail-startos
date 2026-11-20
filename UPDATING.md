@@ -1,12 +1,10 @@
 # Updating the upstream version
 
-Holesail's container runs the `holesail/holesail:latest` Docker image (no tag pin), so the upstream version is not held by a `dockerTag` or `Dockerfile` here. The only place it surfaces in this repo is the StartOS package version `2.4.1:N` — a "bump" is recording that a new upstream release exists by updating that version string.
+Holesail runs the prebuilt `holesail/holesail` Docker Hub image, built by [holesail/holesail-docker](https://github.com/holesail/holesail-docker) from [holesail/holesail](https://github.com/holesail/holesail). The pin is `images.holesail.source.dockerTag` in [`startos/manifest/index.ts`](startos/manifest/index.ts), as `holesail/holesail:<tag>@sha256:<digest>`.
 
 ## Determining the upstream version
 
-The `holesail` CLI/server is published as an npm package by [holesail/holesail](https://github.com/holesail/holesail). The Docker image built from [holesail/holesail-docker](https://github.com/holesail/holesail-docker) wraps that npm package and is published to Docker Hub as [`holesail/holesail`](https://hub.docker.com/r/holesail/holesail). All four typically advance together; npm is the canonical source.
-
-- **npm — `holesail`** (canonical):
+- **npm — `holesail`** (the version the image carries):
 
   ```sh
   npm view holesail version
@@ -18,20 +16,23 @@ The `holesail` CLI/server is published as an npm package by [holesail/holesail](
   gh release view -R holesail/holesail --json tagName -q .tagName
   ```
 
-- **GitHub tags — [holesail/holesail](https://github.com/holesail/holesail)** (fallback if no release published):
+- **Docker Hub — [holesail/holesail](https://hub.docker.com/r/holesail/holesail)**: each tag with its manifest digest and architectures.
 
   ```sh
-  gh api repos/holesail/holesail/tags --jq '.[0].name'
+  curl -fsSL "https://hub.docker.com/v2/repositories/holesail/holesail/tags?page_size=20&ordering=last_updated" \
+    | jq -r '.results[] | "\(.name) \(.digest) \([.images[].architecture] | join(","))"'
   ```
 
-- **Docker Hub — [holesail/holesail](https://hub.docker.com/r/holesail/holesail)** (confirms an image with the new version is available):
+  Pick the build that carries the new release and lists both `amd64` and `arm64`. The image is built from holesail/holesail's default branch, so its per-build `sha-<commit>` tag (the holesail-docker commit) is the stable name for it. A version tag such as `2.4.1` is not always published for both architectures.
+
+- **Confirm the Holesail version in that build:** the `version` in holesail/holesail's `package.json` at the time the image was built.
 
   ```sh
-  curl -fsSL "https://hub.docker.com/v2/repositories/holesail/holesail/tags?page_size=20&ordering=last_updated" | jq -r '.results[].name'
+  gh api "repos/holesail/holesail/commits?until=<last_updated>&per_page=1" --jq '.[0].sha'
+  gh api "repos/holesail/holesail/contents/package.json?ref=<sha>" -H "Accept: application/vnd.github.raw" | jq -r .version
   ```
-
-The currently recorded upstream version is the upstream part of the `version` string in [`startos/versions/current.ts`](startos/versions/current.ts) — e.g. `2.4.1:12` means upstream `2.4.1`.
 
 ## Applying the bump
 
-The image tag is `:latest`, so no `dockerTag` or `Dockerfile` change is needed. Set the upstream part of the `version` string in [`startos/versions/current.ts`](startos/versions/current.ts) to the new release.
+1. Set `images.holesail.source.dockerTag` in [`startos/manifest/index.ts`](startos/manifest/index.ts) to `holesail/holesail:<tag>@sha256:<digest>`, using the multi-architecture digest from the Docker Hub listing above.
+2. Set the upstream part of `version` in [`startos/versions/current.ts`](startos/versions/current.ts) to the Holesail version that build carries.
