@@ -36,3 +36,4 @@ Holesail runs the prebuilt `holesail/holesail` Docker Hub image, built by [holes
 
 1. Set `images.holesail.source.dockerTag` in [`startos/manifest/index.ts`](startos/manifest/index.ts) to `holesail/holesail:<tag>@sha256:<digest>`, using the multi-architecture digest from the Docker Hub listing above.
 2. Set the upstream part of `version` in [`startos/versions/current.ts`](startos/versions/current.ts) to the Holesail version that build carries.
+3. Check that `serverScript` in [`startos/utils.ts`](startos/utils.ts) still matches the new build: the library at `/usr/src/app/src/index.js`, its `Holesail` constructor options, and the `--live` branch of `src/bin/holesail.mjs` it mirrors.

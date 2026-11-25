@@ -33,3 +33,10 @@ export function getRandomConnectionString(isPublic: boolean) {
 
 export const isPublic = (connectionString: string) =>
   connectionString.charAt(5) === '0'
+
+// Holesail's CLI and its INFO log both print the tunnel's credential, so the daemon drives the library.
+export const serverScript = `const Holesail = require('/usr/src/app/src/index.js')
+const { HOST, PORT, KEY } = process.env
+new Holesail({ server: true, host: HOST, port: Number(PORT), key: KEY, secure: true })
+  .ready()
+  .then(() => console.log(\`Holesail is forwarding to \${HOST}:\${PORT}\`))`

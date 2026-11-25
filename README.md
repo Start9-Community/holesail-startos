@@ -37,15 +37,17 @@
 
 One upstream image, consumed unmodified — but the daemon set is not fixed.
 
-| Property      | Value                                          |
-| ------------- | ---------------------------------------------- |
-| Image         | `holesail/holesail:sha-ac43540`, digest-pinned |
-| Architectures | x86_64, aarch64                                |
-| Entrypoint    | The image's own, via `sdk.useEntrypoint()`     |
+| Property      | Value                                                             |
+| ------------- | ----------------------------------------------------------------- |
+| Image         | `holesail/holesail:sha-ac43540`, digest-pinned                    |
+| Architectures | x86_64, aarch64                                                   |
+| Command       | `node -e` on holesail's library, bypassing the image's entrypoint |
 
 | Subcontainer                     | Purpose                   |
 | -------------------------------- | ------------------------- |
 | `holesail-<package>-<interface>` | One per configured tunnel |
+
+**The daemon never runs the image's entrypoint or Holesail's CLI.** Both print the connection string at every start (the entrypoint echoes its arguments; the CLI prints a banner, a QR code, and, with `--log`, the private-mode seed), so the daemon constructs a `Holesail` server from `src/index.js` itself, passing the connection string only through `KEY` in its environment. Its one log line names the target `host:port`. **View Connections** is the only place a connection string is shown.
 
 **There is one daemon and one subcontainer per tunnel, built dynamically from the stored list.** A fresh install with no tunnels runs nothing at all; adding three tunnels runs three daemons. The subcontainer names are derived from the target, so an agent cannot know them in advance — read the configured tunnels to find them.
 
@@ -192,11 +194,9 @@ volumes:
 file_models:
   - store.json # nested map: packageId -> interfaceId -> connection string
 startos_managed_env_vars: # per tunnel daemon
-  - MODE
   - PORT
   - HOST
   - KEY
-  - LOG
   - NODE_ENV
 dependencies: [] # can tunnel any installed service; none can be declared
 interfaces: {} # none; reachability is peer-to-peer
