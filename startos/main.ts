@@ -3,7 +3,7 @@ import { storeJson } from './fileModels/store.json'
 import { manifest } from './manifest'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { bridgeHost } from './utils'
+import { bridgeHost, serverScript } from './utils'
 
 // Reactive daemon set: one Holesail server daemon per stored tunnel. The store
 // `.const` is read INSIDE the reconciler's builder, where `constRetry` drives a
@@ -69,15 +69,13 @@ export const main = sdk.setupMain(async ({ effects }) =>
                   `holesail-${id}`,
                 ),
                 exec: {
-                  command: sdk.useEntrypoint(),
+                  command: ['node', '-e', serverScript],
                   // connectionString/HOST/PORT ride in exec.env (hashed by the
                   // reconciler), so editing one tunnel restarts only its daemon.
                   env: {
-                    MODE: 'server',
                     PORT: String(addr.port),
                     HOST: addr.hostname,
                     KEY: connectionString,
-                    LOG: 'true',
                     NODE_ENV: 'production',
                   },
                 },
