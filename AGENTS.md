@@ -38,4 +38,5 @@ verified, tried, and decided belongs in the commit message and the PR body.
 - **Keep one lazy subcontainer per tunnel, each on its own volume subpath** — dynamic reconcile needs lazy handles, and shared files would contend mid-reconcile.
 - **Don't convert the `effects.getServiceInterface` read in `main.ts` to host-first addressing** — a tunnel's target is known only by interface id, and no effect lists a package's hosts.
 - **Regenerate an existing tunnel's connection string only when its Public setting changes** — it is the credential every remote client holds, and it encodes the mode.
+- **View Connections shows `clientConnectionString(stored)`, never the stored value** — a public tunnel's stored string is the server's key, not what a client dials.
 - **Don't put the daemon back on `sdk.useEntrypoint()` or Holesail's CLI, and don't turn on its INFO log** — each writes the tunnel's credential to the service log.
