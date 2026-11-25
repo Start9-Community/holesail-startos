@@ -1,6 +1,7 @@
 import { storeJson } from '../fileModels/store.json'
 import { i18n } from '../i18n'
 import { sdk } from '../sdk'
+import { clientConnectionString } from '../utils'
 
 export const viewConnections = sdk.Action.withoutInput(
   // id
@@ -53,7 +54,7 @@ export const viewConnections = sdk.Action.withoutInput(
                       type: 'single' as const,
                       name: `${packageTitle} - ${ifaceName}`,
                       description: null,
-                      value: connectionString,
+                      value: clientConnectionString(connectionString),
                       masked: true,
                       copyable: true,
                       qr: true,

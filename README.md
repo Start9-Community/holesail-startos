@@ -47,7 +47,7 @@ One upstream image, consumed unmodified — but the daemon set is not fixed.
 | -------------------------------- | ------------------------- |
 | `holesail-<package>-<interface>` | One per configured tunnel |
 
-**The daemon never runs the image's entrypoint or Holesail's CLI.** Both print the connection string at every start (the entrypoint echoes its arguments; the CLI prints a banner, a QR code, and, with `--log`, the private-mode seed), so the daemon constructs a `Holesail` server from `src/index.js` itself, passing the connection string only through `KEY` in its environment. Its one log line names the target `host:port`. **View Connections** is the only place a connection string is shown.
+**The daemon never runs the image's entrypoint or Holesail's CLI.** Both print the connection string at every start (the entrypoint echoes its arguments; the CLI prints a banner, a QR code, and, with `--log`, the private-mode seed), so the daemon constructs a `Holesail` server from `src/index.js` itself, passing the stored connection string only through `KEY` in its environment and taking public or private mode from its prefix. Its one log line names the target `host:port`. **View Connections** is the only place a connection string is shown.
 
 **There is one daemon and one subcontainer per tunnel, built dynamically from the stored list.** A fresh install with no tunnels runs nothing at all; adding three tunnels runs three daemons. The subcontainer names are derived from the target, so an agent cannot know them in advance — read the configured tunnels to find them.
 
@@ -76,7 +76,12 @@ One model, and its shape is unusual: it has no fixed fields at all.
 
 It is a **nested map**, keyed by package id and then by interface id, whose values are connection strings. Every tunnel is one entry, and the daemon set is generated from it directly — the store _is_ the configuration.
 
-**The connection string is the credential.** It is generated when a tunnel is created and encodes whether the tunnel is public or private; anyone holding it can reach the tunnelled interface from anywhere. It is stable across restarts, so it does not need re-sharing; only switching the tunnel between public and private replaces it.
+**The stored string is the tunnel's key, and its prefix is its mode:** `hs://s000<key>` private, `hs://0000<key>` public. Holesail seeds the server's ed25519 keypair from sha256 of `<key>`.
+
+- **A private tunnel's clients use the stored string itself.** It is a secret: anyone holding it can reach the tunnelled interface from anywhere.
+- **A public tunnel's clients use `hs://0000` plus the z32-encoded public key**, which View Connections derives from the stored string. Clients holding it cannot impersonate the server, but the DHT nodes that store the tunnel's records see that key, so a public tunnel is open to anyone who learns it.
+
+Both are stable across restarts, so they do not need re-sharing; only switching the tunnel between public and private replaces them.
 
 Nothing else is modelled — the application has no configuration of its own here beyond the environment each daemon is given.
 
@@ -125,7 +130,7 @@ Creates, edits, and removes tunnels. This is the whole of configuration.
 
 ### View Connections
 
-Shows the connection strings for the configured tunnels.
+Shows the connection strings clients use for the configured tunnels — for a public tunnel, the one derived from its stored key.
 
 - **Hidden until at least one tunnel exists** — there is nothing to show before that.
 - **What it changes:** nothing. It is a read.
